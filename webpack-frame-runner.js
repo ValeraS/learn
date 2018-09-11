@@ -60,13 +60,14 @@ module.exports = {
       /debug\/node/,
       'debug/src/browser'
     )
-  ]
+  ],
+  optimization: {
+    minimizer: [
+      new UglifyPlugin({
+        test: /\.js($|\?)/i,
+        cache: true,
+        sourceMap: true
+      })
+    ]
+  }
 };
-
-module.exports.plugins.push(
-  new UglifyPlugin({
-    test: /\.js($|\?)/i,
-    cache: true,
-    sourceMap: true
-  })
-);
