@@ -28,22 +28,27 @@ module.exports = {
   module: {
     rules: [{
       test: /\.jsx?$/,
-      include: [ path.join(__dirname, 'client/') ],
+      include: [ path.join(__dirname, 'src/client/') ],
       use: {
         loader: 'babel-loader',
         options: {
           babelrc: false,
           presets: [
-            [ 'es2015', { modules: false }],
-            [ 'stage-3' ]
+            [ '@babel/preset-env', { modules: false } ]
           ],
           plugins: [
-            'transform-runtime',
-            'lodash'
+            require('@babel/plugin-transform-runtime')
           ]
         }
       }
     }]
+  },
+  resolve: {
+    // options for resolving module requests
+    // (does not apply to resolving to loaders)
+    modules: [
+      'node_modules'
+    ]
   },
   externals: {
     rxjs: 'Rx'
