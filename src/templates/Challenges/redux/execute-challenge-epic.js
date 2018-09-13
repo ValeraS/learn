@@ -51,10 +51,7 @@ function updateMainEpic(actions, { getState }, { document }) {
       const proxyLogger = new Subject();
       const frameMain = createMainFramer(document, getState, proxyLogger);
       const buildAndFrameMain = actions.pipe(
-        ofType(
-          types.updateFile,
-          types.challengeMounted
-        ),
+        ofType(types.updateFile, types.challengeMounted),
         debounceTime(executeDebounceTimeout),
         switchMap(() =>
           buildFromFiles(getState(), true).pipe(
