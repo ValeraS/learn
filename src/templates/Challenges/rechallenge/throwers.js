@@ -1,4 +1,5 @@
-import { Observable } from 'rxjs';
+import { of, throwError } from 'rxjs';
+import { catchError, flatMap, switchMap } from 'rxjs/operators';
 import cond from 'lodash/cond';
 import identity from 'lodash/identity';
 import stubTrue from 'lodash/stubTrue';
@@ -102,22 +103,23 @@ export default function validate(file) {
     validators
       .reduce(
         (obs, validator) =>
-          obs.flatMap(file => {
+          obs.pipe(flatMap(file => {
             try {
               return castToObservable(validator(file));
             } catch (err) {
-              return Observable.throw(err);
+              return throwError(err);
             }
-          }),
-        Observable.of(file)
+          })),
+        of(file)
+      ).pipe(
+        // if no error has occured map to the original file
+        switchMap(() => of(file)),
+        // if err add it to the file
+        // and return file
+        catchError(err => {
+          file.error = err;
+          return of(file);
+        })
       )
-      // if no error has occured map to the original file
-      .switchMap(() => Observable.of(file))
-      // if err add it to the file
-      // and return file
-      .catch(err => {
-        file.error = err;
-        return Observable.of(file);
-      })
   );
 }

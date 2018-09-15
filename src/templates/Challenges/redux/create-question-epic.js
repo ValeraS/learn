@@ -5,8 +5,7 @@ import {
   challengeFilesSelector,
   challengeMetaSelector
 } from '../redux';
-import { tap } from 'rxjs/operators/tap';
-import { mapTo } from 'rxjs/operators/mapTo';
+import { mapTo, tap } from 'rxjs/operators';
 
 function filesToMarkdown(files = {}) {
   const moreThenOneFile = Object.keys(files).length > 1;
@@ -31,11 +30,11 @@ function filesToMarkdown(files = {}) {
   }, '\n');
 }
 
-function createQuestionEpic(action$, { getState }, { window }) {
+function createQuestionEpic(action$, state$, { window }) {
   return action$.pipe(
     ofType(types.createQuestion),
     tap(() => {
-      const state = getState();
+      const state = state$.value;
       const files = challengeFilesSelector(state);
       const {
         title: challengeTitle,

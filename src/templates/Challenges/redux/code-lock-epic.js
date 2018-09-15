@@ -1,4 +1,4 @@
-import { map } from 'rxjs/operators/map';
+import { map } from 'rxjs/operators';
 import { ofType } from 'redux-observable';
 import { types, unlockCode } from './';
 

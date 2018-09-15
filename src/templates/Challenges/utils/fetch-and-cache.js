@@ -1,4 +1,5 @@
-import { Observable } from 'rxjs';
+import { of, throwError } from 'rxjs';
+import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 import { ajax$ } from './ajax-stream';
 
 // value used to break browser ajax caching
@@ -16,15 +17,16 @@ export function _fetchScript({
     return this.cache.get(src);
   }
   const url = cacheBreaker ? `${src}?cacheBreaker=${cacheBreakerValue}` : src;
-  const script = ajax$({ url, crossDomain })
-    .do(res => {
+  const script = ajax$({ url, crossDomain }).pipe(
+    tap(res => {
       if (res.status !== 200) {
         throw new Error('Request errror: ' + res.status);
       }
-    })
-    .map(({ response }) => response)
-    .map(script => `<script>${script}</script>`)
-    .shareReplay();
+    }),
+    map(({ response }) => response),
+    map(script => `<script>${script}</script>`),
+    shareReplay()
+  );
 
   this.cache.set(src, script);
   return script;
@@ -37,7 +39,7 @@ export function _fetchLink({
   crossDomain = true
 } = {}) {
   if (!href) {
-    return Observable.throw(new Error('No source provided for link'));
+    return throwError(new Error('No source provided for link'));
   }
   if (this.cache.has(href)) {
     return this.cache.get(href);
@@ -45,22 +47,23 @@ export function _fetchLink({
   // css files with `url(...` may not work in style tags
   // so we put them in raw links
   if (raw) {
-    const link = Observable.of(
+    const link = of(
       `<link href=${href} rel='stylesheet' />`
-    ).shareReplay();
+    ).pipe(shareReplay());
     this.cache.set(href, link);
     return link;
   }
-  const link = ajax$({ url: href, crossDomain })
-    .do(res => {
+  const link = ajax$({ url: href, crossDomain }).pipe(
+    tap(res => {
       if (res.status !== 200) {
         throw new Error('Request error: ' + res.status);
       }
-    })
-    .map(({ response }) => response)
-    .map(script => `<style>${script}</style>`)
-    .catch(() => Observable.of(''))
-    .shareReplay();
+    }),
+    map(({ response }) => response),
+    map(script => `<style>${script}</style>`),
+    catchError(() => of('')),
+    shareReplay()
+  );
 
   this.cache.set(href, link);
   return link;

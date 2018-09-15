@@ -34,7 +34,7 @@ const rootReducer = combineReducers({
 
 const rootEpic = combineEpics(...appEpics, ...challengeEpics);
 
-const epicMiddleware = createEpicMiddleware(rootEpic, {
+const epicMiddleware = createEpicMiddleware({
   dependencies: {
     window: typeof window !== 'undefined' ? window : {},
     location: typeof window !== 'undefined' ? window.location : {},
@@ -47,8 +47,11 @@ const composeEnhancers = composeWithDevTools({
   // options like actionSanitizer, stateSanitizer
 });
 
-export const createStore = () =>
-  reduxCreateStore(
+export const createStore = () => {
+  const store = reduxCreateStore(
     rootReducer,
     composeEnhancers(applyMiddleware(epicMiddleware))
   );
+  epicMiddleware.run(rootEpic);
+  return store;
+};

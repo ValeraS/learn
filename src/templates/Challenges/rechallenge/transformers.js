@@ -13,7 +13,8 @@ import {
 import * as Babel from '@babel/standalone';
 import presetEnv from '@babel/preset-env';
 import presetReact from '@babel/preset-react';
-import { Observable } from 'rxjs';
+import { of } from 'rxjs';
+import { flatMap } from 'rxjs/operators';
 import protect from 'loop-protect';
 
 import * as vinyl from '../utils/polyvinyl.js';
@@ -99,7 +100,7 @@ const htmlSassTransformCode = file => {
     return vinyl.transformContents(() => doc.body.innerHTML, file);
   }
   return styleTags.reduce((obs, style) => {
-    return obs.flatMap(
+    return obs.pipe(flatMap(
       file =>
         new Promise(resolve => {
           window.Sass.compile(style.innerHTML, function(result) {
@@ -108,8 +109,8 @@ const htmlSassTransformCode = file => {
             resolve(vinyl.transformContents(() => doc.body.innerHTML, file));
           });
         })
-    );
-  }, Observable.of(file));
+    ));
+  }, of(file));
 };
 
 export const htmlSassTransformer = cond([
@@ -125,6 +126,6 @@ export const _transformers = [
 
 export function applyTransformers(file, transformers = _transformers) {
   return transformers.reduce((obs, transformer) => {
-    return obs.flatMap(file => castToObservable(transformer(file)));
-  }, Observable.of(file));
+    return obs.pipe(flatMap(file => castToObservable(transformer(file))));
+  }, of(file));
 }

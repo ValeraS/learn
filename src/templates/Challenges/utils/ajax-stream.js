@@ -17,7 +17,7 @@
  */
 
 import debugFactory from 'debug';
-import { Observable, noop } from 'rxjs';
+import { Observable, throwError, noop } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 const debug = debugFactory('fcc:ajax$');
@@ -256,7 +256,7 @@ export function post$(url, body) {
   try {
     body = JSON.stringify(body);
   } catch (e) {
-    return Observable.throw(e);
+    return throwError(e);
   }
 
   return ajax$({ url, body, method: 'POST' });
@@ -267,7 +267,7 @@ export function postJSON$(url, body) {
   try {
     body = JSON.stringify(body);
   } catch (e) {
-    return Observable.throw(e);
+    return throwError(e);
   }
 
   return ajax$({
@@ -284,7 +284,7 @@ export function postJSON$(url, body) {
 }
 
 // Creates an observable sequence from an Ajax GET Request with the body.
-// get$(url: String) => Obserable[Any]
+// get$(url: String) => Observable[Any]
 export function get$(url) {
   return ajax$({ url: url });
 }
@@ -305,5 +305,5 @@ export function getJSON$(url) {
       Accept: 'application/json'
     },
     normalizeError: (e, xhr) => parseXhrResponse('json', xhr)
-  }).map(({ response }) => response);
+  }).pipe(map(({ response }) => response));
 }

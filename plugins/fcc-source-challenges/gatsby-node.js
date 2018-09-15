@@ -1,3 +1,4 @@
+const { filter, map } = require('rxjs/operators');
 const chokidar = require('chokidar');
 const { createChallengeNodes } = require('./create-Challenge-nodes');
 
@@ -27,11 +28,11 @@ that delivers challenge files to the plugin
   });
   const { source } = pluginOptions;
   const createAndProcessNodes = () =>
-    source()
-      .filter(nodes => nodes.some(node => node.superBlock !== 'Certificates'))
-      .map(nodes => nodes.map(node => createChallengeNodes(node, reporter)))
-      .map(nodes => nodes.map(node => createNode(node)))
-      .subscribe();
+    source().pipe(
+      filter(nodes => nodes.some(node => node.superBlock !== 'Certificates')),
+      map(nodes => nodes.map(node => createChallengeNodes(node, reporter))),
+      map(nodes => nodes.map(node => createNode(node)))
+    ).subscribe();
 
   createAndProcessNodes();
   // For every path that is reported before the 'ready' event, we throw them

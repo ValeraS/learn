@@ -1,5 +1,6 @@
 import { toString, flow } from 'lodash';
-import Rx, { Observable } from 'rxjs';
+import * as Rx from 'rxjs';
+import * as RxOperators from 'rxjs/operators';
 import { ShallowWrapper, ReactWrapper } from 'enzyme';
 import Adapter16 from 'enzyme-adapter-react-16';
 import { isJSEnabledSelector } from '../redux';
@@ -34,13 +35,13 @@ const createHeader = (id = mainId) => `
 `;
 
 export const runTestsInTestFrame = (document, tests) =>
-  Observable.defer(() => {
+  Rx.defer(() => {
     const { contentDocument: frame } = document.getElementById(testId);
     return frame.__runTests(tests);
   });
 
-const createFrame = (document, getState, id) => ctx => {
-  const isJSEnabled = isJSEnabledSelector(getState());
+const createFrame = (document, state$, id) => ctx => {
+  const isJSEnabled = isJSEnabledSelector(state$.value);
   const frame = document.createElement('iframe');
   frame.id = id;
   if (!isJSEnabled) {
@@ -71,7 +72,7 @@ const mountFrame = document => ({ element, ...rest }) => {
 };
 
 const addDepsToDocument = ctx => {
-  ctx.document.Rx = Rx;
+  ctx.document.Rx = { ...Rx, operators: RxOperators };
 
   // using require here prevents nodejs issues as loop-protect
   // is added to the window object by webpack and not available to
@@ -131,18 +132,18 @@ const writeContentToFrame = ctx => {
   return ctx;
 };
 
-export const createMainFramer = (document, getState, proxyLogger) =>
+export const createMainFramer = (document, state$, proxyLogger) =>
   flow(
-    createFrame(document, getState, mainId),
+    createFrame(document, state$, mainId),
     mountFrame(document),
     addDepsToDocument,
     buildProxyConsole(proxyLogger),
     writeContentToFrame
   );
 
-export const createTestFramer = (document, getState, frameReady, proxyLogger) =>
+export const createTestFramer = (document, state$, frameReady, proxyLogger) =>
   flow(
-    createFrame(document, getState, testId),
+    createFrame(document, state$, testId),
     mountFrame(document),
     addDepsToDocument,
     writeTestDepsToDocument(frameReady),

@@ -8,13 +8,15 @@ import {
 } from '../../../redux/app';
 import { postJSON$ } from '../utils/ajax-stream';
 import { _csrf } from '../../../redux/cookieVaules';
-import { of } from 'rxjs/observable/of';
+import { of } from 'rxjs';
 
-function currentChallengeEpic(action$, { getState }) {
+function currentChallengeEpic(action$, state$) {
   return action$.pipe(
     ofType(types.challengeMounted),
-    filter(() => isSignedInSelector(getState())),
-    filter(({ payload }) => payload !== currentChallengeIdSelector(getState())),
+    filter(() => isSignedInSelector(state$.value)),
+    filter(({ payload }) => (
+      payload !== currentChallengeIdSelector(state$.value)
+    )),
     switchMap(({ payload }) =>
       postJSON$('/external/update-my-current-challenge', {
         currentChallengeId: payload,

@@ -1,11 +1,9 @@
-import { of } from 'rxjs/observable/of';
-import { empty } from 'rxjs/observable/empty';
+import { empty, of, concat } from 'rxjs';
 import {
   switchMap,
   retry,
   map,
   catchError,
-  concat,
   filter,
   tap
 } from 'rxjs/operators';
@@ -130,11 +128,11 @@ function shouldShowDonate(state) {
   return shouldShowDonationSelector(state) ? of(openDonationModal()) : empty();
 }
 
-export default function completionEpic(action$, { getState }) {
+export default function completionEpic(action$, state$) {
   return action$.pipe(
     ofType(types.submitChallenge),
     switchMap(({ type }) => {
-      const state = getState();
+      const state = state$.value;
       const meta = challengeMetaSelector(state);
       const { isDonating } = userSelector(state);
       const { nextChallengePath, introPath, challengeType } = meta;
@@ -154,10 +152,13 @@ export default function completionEpic(action$, { getState }) {
         submitter = submitters[submitTypes[challengeType]];
       }
 
-      return submitter(type, state).pipe(
-        tap(() => navigate(introPath ? introPath : nextChallengePath)),
-        concat(closeChallengeModal),
-        concat(showDonate),
+      return concat(
+        submitter(type, state).pipe(
+          tap(() => navigate(introPath ? introPath : nextChallengePath))
+        ),
+        closeChallengeModal,
+        showDonate
+      ).pipe(
         filter(Boolean)
       );
     })

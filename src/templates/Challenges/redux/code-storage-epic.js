@@ -1,8 +1,10 @@
-import { of } from 'rxjs/observable/of';
-import { filter } from 'rxjs/operators/filter';
-import { switchMap } from 'rxjs/operators/switchMap';
-import { tap } from 'rxjs/operators/tap';
-import { ignoreElements } from 'rxjs/operators/ignoreElements';
+import { of } from 'rxjs';
+import {
+  filter,
+  switchMap,
+  tap,
+  ignoreElements
+} from 'rxjs/operators';
 import { combineEpics, ofType } from 'redux-observable';
 import store from 'store';
 
@@ -61,24 +63,24 @@ function isFilesAllPoly(files) {
     .every(file => isPoly(file));
 }
 
-function clearCodeEpic(action$, { getState }) {
+function clearCodeEpic(action$, state$) {
   return action$.pipe(
     ofType(types.submitComplete, types.resetChallenge),
     tap(() => {
-      const { id } = challengeMetaSelector(getState());
+      const { id } = challengeMetaSelector(state$.value);
       store.remove(id);
     }),
     ignoreElements()
   );
 }
 
-function saveCodeEpic(action$, { getState }) {
+function saveCodeEpic(action$, state$) {
   return action$.pipe(
     ofType(types.executeChallenge),
     // do not save challenge if code is locked
-    filter(() => !isCodeLockedSelector(getState())),
+    filter(() => !isCodeLockedSelector(state$.value)),
     tap(() => {
-      const state = getState();
+      const state = state$.value;
       const { id } = challengeMetaSelector(state);
       const files = challengeFilesSelector(state);
       store.set(id, files);
@@ -87,12 +89,12 @@ function saveCodeEpic(action$, { getState }) {
   );
 }
 
-function loadCodeEpic(action$, { getState }) {
+function loadCodeEpic(action$, state$) {
   return action$.pipe(
     ofType(types.challengeMounted),
     switchMap(({ payload: id }) => {
       let finalFiles;
-      const state = getState();
+      const state = state$.value;
       const challenge = challengeMetaSelector(state);
       const files = challengeFilesSelector(state);
       const fileKeys = Object.keys(files);

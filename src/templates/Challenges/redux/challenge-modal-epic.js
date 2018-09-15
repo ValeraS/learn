@@ -1,7 +1,6 @@
 import { ofType } from 'redux-observable';
 import { switchMap } from 'rxjs/operators';
-import { of } from 'rxjs/observable/of';
-import { empty } from 'rxjs/observable/empty';
+import { empty, of } from 'rxjs';
 
 import { types, openModal } from './';
 

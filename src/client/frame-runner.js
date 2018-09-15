@@ -64,8 +64,8 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     /* eslint-enable no-unused-vars */
     if (window.__err) {
-      return Rx.Observable.from(tests)
-        .map(test => {
+      return Rx.from(tests).pipe(
+        Rx.operators.map(test => {
           /* eslint-disable */
           return Object.assign({}, test, {
             err: window.__err.message + '\n' + window.__err.stack,
@@ -73,21 +73,22 @@ document.addEventListener('DOMContentLoaded', function() {
             stack: window.__err.stack
           });
           /* eslint-enable */
-        })
-        .toArray()
-        .do(() => {
+        }),
+        Rx.operators.toArray(),
+        Rx.operators.tap(() => {
           window.__err = null;
-        });
+        })
+      );
     }
 
     // Iterate through the test one at a time
     // on new stacks
     return (
-      Rx.Observable.from(tests, null, null, Rx.Scheduler.default)
+      Rx.from(tests, null, null, Rx.Scheduler.default).pipe(
         // add delay here for firefox to catch up
-        .delay(200)
+        Rx.operators.delay(200),
         /* eslint-disable no-unused-vars */
-        .flatMap(({ text, testString }) => {
+        Rx.operators.flatMap(({ text, testString }) => {
           const assert = chai.assert;
           const getUserInput = __getUserInput;
           /* eslint-enable no-unused-vars */
@@ -113,29 +114,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
               if (isPromise(__result)) {
                 // turn promise into an observable
-                __result = Rx.Observable.fromPromise(__result);
+                __result = Rx.from(__result);
               }
             }
 
             if (!__result || typeof __result.subscribe !== 'function') {
               // make sure result is an observable
-              __result = Rx.Observable.of(null);
+              __result = Rx.of(null);
             }
           } catch (e) {
             // something threw an uncaught error
             // we catch here and wrap it in an observable
-            __result = Rx.Observable.throw(e);
+            __result = Rx.throwError(e);
           }
-          return __result
-            .timeout(testTimeout)
-            .map(() => {
+          return __result.pipe(
+            Rx.operators.timeout(testTimeout),
+            Rx.operators.map(() => {
               // we don't need the result of a promise/observable/cb here
               // all data asserts should happen further up the chain
               // mark test as passing
               newTest.pass = true;
               return newTest;
-            })
-            .catch(err => {
+            }),
+            Rx.operators.catchError(err => {
               // we catch the error here to prevent the error from bubbling up
               // and collapsing the pipe
               let message = err.message || '';
@@ -148,11 +149,13 @@ document.addEventListener('DOMContentLoaded', function() {
               newTest.stack = err.stack;
               newTest.message = message;
               // RxJS catch expects an observable as a return
-              return Rx.Observable.of(newTest);
-            });
-        })
+              return Rx.of(newTest);
+            })
+          );
+        }),
         // gather tests back into an array
-        .toArray()
+        Rx.operators.toArray()
+      )
     );
   };
 

@@ -1,23 +1,23 @@
 // originally based off of https://github.com/gulpjs/vinyl
 import invariant from 'invariant';
-import { Observable } from 'rxjs';
-import { isPromise } from 'rxjs/util/isPromise';
+import { from, Observable, of } from 'rxjs';
+import { flatMap, map } from 'rxjs/operators';
+import { isPromise } from 'rxjs/internal/util/isPromise';
 
 export function castToObservable(maybe) {
   if (maybe instanceof Observable) {
     return maybe;
   }
   if (isPromise(maybe)) {
-    return Observable.fromPromise(maybe);
+    return from(maybe);
   }
-  return Observable.of(maybe);
+  return of(maybe);
 }
-
 // createFileStream(
 //   files: [...PolyVinyl]
 // ) => Observable[...Observable[...PolyVinyl]]
 export function createFileStream(files = []) {
-  return Observable.of(Observable.from(files));
+  return of(from(files));
 }
 
 // Observable::pipe(
@@ -27,9 +27,9 @@ export function createFileStream(files = []) {
 // ) => Observable[...Observable[...PolyVinyl]]
 export function pipe(project) {
   const source = this;
-  return source.map(files =>
-    files.flatMap(file => castToObservable(project(file)))
-  );
+  return source.pipe(map(files =>
+    files.pipe(flatMap(file => castToObservable(project(file))))
+  ));
 }
 
 // interface PolyVinyl {

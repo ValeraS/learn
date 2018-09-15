@@ -1,5 +1,5 @@
-import { combineLatest } from 'rxjs/observable/combineLatest';
-import { map } from 'rxjs/operators/map';
+import { combineLatest } from 'rxjs';
+import { map } from 'rxjs/operators';
 import identity from 'lodash/identity';
 
 import { fetchScript } from './fetch-and-cache.js';

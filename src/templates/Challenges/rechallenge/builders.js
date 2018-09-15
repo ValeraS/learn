@@ -1,5 +1,6 @@
 import { template as _template } from 'lodash';
-import { Observable } from 'rxjs';
+import { combineLatest, from, of } from 'rxjs';
+import { flatMap, map, reduce, shareReplay } from 'rxjs/operators';
 import cond from 'lodash/cond';
 import flow from 'lodash/flow';
 import identity from 'lodash/identity';
@@ -55,37 +56,39 @@ export const cssToHtml = cond([
 // ) => Observable[{ build: String, sources: Dictionary }]
 export function concatHtml(required, template) {
   const createBody = template ? _template(template) : defaultTemplate;
-  const source = this.shareReplay();
-  const sourceMap = source.flatMap(files =>
-    files.reduce((sources, file) => {
+  const source = this.pipe(shareReplay());
+  const sourceMap = source.pipe(flatMap(files =>
+    files.pipe(reduce((sources, file) => {
       sources[file.name] = file.source || file.contents;
       return sources;
-    }, {})
-  );
+    }, {}))
+  ));
 
-  const head = Observable.from(required)
-    .flatMap(required => {
+  const head = from(required).pipe(
+    flatMap(required => {
       if (required.src) {
         return fetchScript(required);
       }
       if (required.link) {
         return fetchLink(required);
       }
-      return Observable.of('');
-    })
-    .reduce((head, required) => head + required, '')
-    .map(head => `<head>${head}</head>`);
+      return of('');
+    }),
+    reduce((head, required) => head + required, ''),
+    map(head => `<head>${head}</head>`)
+  );
 
-  const body = source
-    .flatMap(file =>
-      file.reduce((body, file) => {
+  const body = source.pipe(
+    flatMap(file =>
+      file.pipe(reduce((body, file) => {
         return body + file.contents + file.tail + htmlCatch;
-      }, '')
-    )
-    .map(source => ({ source }))
-    .map(createBody);
+      }, ''))
+    ),
+    map(source => ({ source })),
+    map(createBody)
+  );
 
-  return Observable.combineLatest(
+  return combineLatest(
     head,
     body,
     fetchScript({

@@ -1,7 +1,10 @@
-import { Subject } from 'rxjs';
-import { merge } from 'rxjs/observable/merge';
-import { of } from 'rxjs/observable/of';
-import { from } from 'rxjs/observable/from';
+import {
+  Subject,
+  merge,
+  of,
+  from,
+  concat
+} from 'rxjs';
 
 import {
   debounceTime,
@@ -9,7 +12,6 @@ import {
   map,
   filter,
   pluck,
-  concat,
   tap,
   catchError,
   ignoreElements,
@@ -44,17 +46,17 @@ import { backend } from '../../../../utils/challengeTypes';
 
 const executeDebounceTimeout = 750;
 
-function updateMainEpic(actions, { getState }, { document }) {
+function updateMainEpic(actions, state$, { document }) {
   return of(document).pipe(
     filter(Boolean),
     switchMap(() => {
       const proxyLogger = new Subject();
-      const frameMain = createMainFramer(document, getState, proxyLogger);
+      const frameMain = createMainFramer(document, state$, proxyLogger);
       const buildAndFrameMain = actions.pipe(
         ofType(types.updateFile, types.challengeMounted),
         debounceTime(executeDebounceTimeout),
         switchMap(() =>
-          buildFromFiles(getState(), true).pipe(
+          buildFromFiles(state$.value, true).pipe(
             map(frameMain),
             ignoreElements(),
             startWith(initConsole('')),
@@ -62,12 +64,12 @@ function updateMainEpic(actions, { getState }, { document }) {
           )
         )
       );
-      return merge(buildAndFrameMain, proxyLogger.map(updateConsole));
+      return merge(buildAndFrameMain, proxyLogger.pipe(map(updateConsole)));
     })
   );
 }
 
-function executeChallengeEpic(action$, { getState }, { document }) {
+function executeChallengeEpic(action$, state$, { document }) {
   return of(document).pipe(
     filter(Boolean),
     switchMap(() => {
@@ -75,7 +77,7 @@ function executeChallengeEpic(action$, { getState }, { document }) {
       const proxyLogger = new Subject();
       const frameTests = createTestFramer(
         document,
-        getState,
+        state$,
         frameReady,
         proxyLogger
       );
@@ -83,7 +85,7 @@ function executeChallengeEpic(action$, { getState }, { document }) {
         pluck('checkChallengePayload'),
         map(checkChallengePayload => ({
           checkChallengePayload,
-          tests: challengeTestsSelector(getState())
+          tests: challengeTestsSelector(state$.value)
         })),
         switchMap(({ checkChallengePayload, tests }) => {
           const postTests = of(
@@ -91,25 +93,29 @@ function executeChallengeEpic(action$, { getState }, { document }) {
             logsToConsole('// console output'),
             checkChallenge(checkChallengePayload)
           ).pipe(delay(250));
-          return runTestsInTestFrame(document, tests).pipe(
-            switchMap(tests => {
-              return from(tests).pipe(
-                map(({ message }) => message),
-                filter(overEvery(isString, Boolean)),
-                map(updateConsole),
-                concat(of(updateTests(tests)))
-              );
-            }),
-            concat(postTests)
+          return concat(
+            runTestsInTestFrame(document, tests).pipe(
+              switchMap(tests => {
+                return concat(
+                  from(tests).pipe(
+                    map(({ message }) => message),
+                    filter(overEvery(isString, Boolean)),
+                    map(updateConsole)
+                  ),
+                  of(updateTests(tests))
+                );
+              })
+            ),
+            postTests
           );
         })
       );
       const buildAndFrameChallenge = action$.pipe(
         ofType(types.executeChallenge),
         debounceTime(executeDebounceTimeout),
-        filter(() => isJSEnabledSelector(getState())),
+        filter(() => isJSEnabledSelector(state$.value)),
         switchMap(() => {
-          const state = getState();
+          const state = state$.value;
           const { challengeType } = challengeMetaSelector(state);
           const build =
             challengeType === backend
@@ -127,7 +133,7 @@ function executeChallengeEpic(action$, { getState }, { document }) {
       return merge(
         buildAndFrameChallenge,
         challengeResults,
-        proxyLogger.map(updateLogs)
+        proxyLogger.pipe(map(updateLogs))
       );
     })
   );

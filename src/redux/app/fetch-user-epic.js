@@ -1,6 +1,5 @@
 /* global HOME_PATH */
-import { of } from 'rxjs/observable/of';
-import { merge } from 'rxjs/observable/merge';
+import { merge, of } from 'rxjs';
 import { ofType } from 'redux-observable';
 import {
   types,
