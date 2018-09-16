@@ -3,29 +3,16 @@ import PropTypes from 'prop-types';
 
 import {
   Form
-  // isValidURL,
-  // makeRequired,
-  // createFormValidator
 } from '../../../components/formHelpers';
 
 const propTypes = {
   isFrontEnd: PropTypes.bool,
-  isSubmitting: PropTypes.bool,
   openModal: PropTypes.func.isRequired,
   updateProjectForm: PropTypes.func.isRequired
 };
 
 const frontEndFields = ['solution'];
 const backEndFields = ['solution', 'githubLink'];
-
-// const fieldValidators = {
-//   solution: makeRequired(isValidURL)
-// };
-
-// const backEndFieldValidators = {
-//   ...fieldValidators,
-//   githubLink: makeRequired(isValidURL)
-// };
 
 const options = {
   types: {
@@ -96,20 +83,15 @@ export class ProjectForm extends PureComponent {
     }
   }
   render() {
-    const { isSubmitting, isFrontEnd } = this.props;
-    const buttonCopy = isSubmitting
-      ? 'Submit and go to my next challenge'
-      : "I've completed this challenge";
+    const { isFrontEnd } = this.props;
+    const buttonCopy = "I've completed this challenge";
     return (
       <Form
         buttonText={`${buttonCopy} (Ctrl + Enter)`}
         formFields={isFrontEnd ? frontEndFields : backEndFields}
         id={isFrontEnd ? 'front-end-form' : 'back-end-form'}
+        onSubmit={this.handleSubmit}
         options={options}
-        submit={this.handleSubmit}
-        // validate={createFormValidator(
-        //   isFrontEnd ? fieldValidators : backEndFieldValidators
-        // )}
       />
     );
   }

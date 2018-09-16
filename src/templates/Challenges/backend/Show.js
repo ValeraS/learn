@@ -1,9 +1,12 @@
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
+import { bindActionCreators } from 'redux';
 import { createSelector } from 'reselect';
-import { reduxForm } from 'redux-form';
+import { connect } from 'react-redux';
 import { Col, Row } from 'react-bootstrap';
 import { graphql } from 'gatsby';
+
+import { randomCompliment } from '../utils/get-words';
 
 import ChallengeTitle from '../components/Challenge-Title';
 import ChallengeDescription from '../components/Challenge-Description';
@@ -13,18 +16,17 @@ import CompletionModal from '../components/CompletionModal';
 import HelpModal from '../components/HelpModal';
 import ProjectToolPanel from '../project/Tool-Panel';
 import {
+  createFiles,
   executeChallenge,
   challengeTestsSelector,
   consoleOutputSelector,
   initTests,
   updateChallengeMeta,
+  updateSuccessMessage,
   backendNS
 } from '../redux';
 
 import {
-  createFormValidator,
-  isValidURL,
-  makeRequired,
   Form
 } from '../../../components/formHelpers';
 import Spacer from '../../../components/util/Spacer';
@@ -35,28 +37,19 @@ import '../components/preview.css';
 import '../components/test-suite.css';
 import '../classic/classic.css';
 
-// provided by redux form
-const reduxFormPropTypes = {
-  fields: PropTypes.object,
-  handleSubmit: PropTypes.func.isRequired,
-  resetForm: PropTypes.func.isRequired,
-  submitting: PropTypes.bool
-};
-
 const propTypes = {
+  createFiles: PropTypes.func.isRequired,
+  data: PropTypes.object,
   description: PropTypes.arrayOf(PropTypes.string),
   executeChallenge: PropTypes.func.isRequired,
   id: PropTypes.string,
+  initTests: PropTypes.func,
   output: PropTypes.string,
+  pageContext: PropTypes.object,
   tests: PropTypes.array,
   title: PropTypes.string,
-  ...reduxFormPropTypes
-};
-
-const fields = ['solution'];
-
-const fieldValidators = {
-  solution: makeRequired(isValidURL)
+  updateChallengeMeta: PropTypes.func,
+  updateSuccessMessage: PropTypes.func
 };
 
 const mapStateToProps = createSelector(
@@ -65,14 +58,21 @@ const mapStateToProps = createSelector(
   (output, tests) => ({
     tests,
     output
-  })
+  }),
 );
 
-const mapDispatchToActions = {
-  executeChallenge,
-  initTests,
-  updateChallengeMeta
-};
+const mapDispatchToProps = dispatch => (
+  bindActionCreators(
+    {
+      createFiles,
+      executeChallenge,
+      initTests,
+      updateChallengeMeta,
+      updateSuccessMessage
+    },
+    dispatch
+  )
+);
 
 const formFields = ['solution'];
 const options = {
@@ -85,28 +85,36 @@ const options = {
 export class BackEnd extends PureComponent {
   componentDidMount() {
     const {
+      createFiles,
       initTests,
       updateChallengeMeta,
+      updateSuccessMessage,
       data: { challengeNode: { fields: { tests }, challengeType } },
       pageContext: { challengeMeta }
     } = this.props;
+    createFiles({});
     initTests(tests);
     updateChallengeMeta({ ...challengeMeta, challengeType });
+    updateSuccessMessage(randomCompliment());
   }
 
   componentDidUpdate(prevProps) {
     const { data: { challengeNode: { title: prevTitle } } } = prevProps;
     const {
+      createFiles,
       initTests,
       updateChallengeMeta,
+      updateSuccessMessage,
       data: {
         challengeNode: { title: currentTitle, fields: { tests }, challengeType }
       },
       pageContext: { challengeMeta }
     } = this.props;
     if (prevTitle !== currentTitle) {
+      createFiles({});
       initTests(tests);
       updateChallengeMeta({ ...challengeMeta, challengeType });
+      updateSuccessMessage(randomCompliment());
     }
   }
 
@@ -117,14 +125,11 @@ export class BackEnd extends PureComponent {
       },
       output,
       tests,
-      submitting,
       executeChallenge
     } = this.props;
 
     // TODO: Should be tied to user.isSignedIn
-    const buttonCopy = submitting
-      ? 'Submit and go to my next challenge'
-      : "I've completed this challenge";
+    const buttonCopy = "I've completed this challenge";
     const blockNameTitle = `${blockName} - ${title}`;
     return (
       <Row>
@@ -139,8 +144,8 @@ export class BackEnd extends PureComponent {
               buttonText={buttonCopy + '(Ctrl + Enter)'}
               formFields={formFields}
               id={backendNS}
+              onSubmit={executeChallenge}
               options={options}
-              submit={executeChallenge}
             />
             <ProjectToolPanel guideUrl={createGuideUrl(slug)} />
           </div>
@@ -172,15 +177,7 @@ export class BackEnd extends PureComponent {
 BackEnd.displayName = 'BackEnd';
 BackEnd.propTypes = propTypes;
 
-export default reduxForm(
-  {
-    form: 'BackEndChallenge',
-    fields,
-    validate: createFormValidator(fieldValidators)
-  },
-  mapStateToProps,
-  mapDispatchToActions
-)(BackEnd);
+export default connect(mapStateToProps, mapDispatchToProps)(BackEnd);
 
 export const query = graphql`
   query BackendChallenge($slug: String!) {
