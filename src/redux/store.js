@@ -47,7 +47,10 @@ const composeEnhancers = composeWithDevTools({
   // options like actionSanitizer, stateSanitizer
 });
 
-export const createStore = () => {
+export const createStore = (storeWithEpics = true) => {
+  if (!storeWithEpics) {
+    return reduxCreateStore(rootReducer);
+  }
   const store = reduxCreateStore(
     rootReducer,
     composeEnhancers(applyMiddleware(epicMiddleware))

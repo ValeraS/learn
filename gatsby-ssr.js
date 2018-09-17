@@ -7,7 +7,7 @@ import headComponents from './src/head';
 import { createStore } from './src/redux/store';
 
 export const replaceRenderer = ({ bodyComponent, replaceBodyHTMLString }) => {
-  const store = createStore();
+  const store = createStore(false);
 
   const ConnectedBody = () => (
     <Provider store={store}>{bodyComponent}</Provider>
