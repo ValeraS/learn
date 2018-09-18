@@ -18,8 +18,7 @@ const options = {
   types: {
     solution: 'url',
     githubLink: 'url'
-  },
-  required: ['solution', 'githubLink']
+  }
 };
 
 export class ProjectForm extends PureComponent {

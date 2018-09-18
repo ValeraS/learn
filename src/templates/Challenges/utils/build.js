@@ -58,7 +58,7 @@ export function buildFromFiles(state, shouldProxyConsole) {
 }
 
 export function buildBackendChallenge(state) {
-  const { solution: url } = backendFormValuesSelector(state);
+  const url = backendFormValuesSelector(state, 'solution');
   return combineLatest(fetchScript(frameRunner), fetchScript(jQuery)).pipe(
     map(([frameRunner, jQuery]) => ({
       build: jQuery + frameRunner,

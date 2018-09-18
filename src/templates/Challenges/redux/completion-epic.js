@@ -102,9 +102,7 @@ function submitBackendChallenge(type, state) {
     if (type === types.submitChallenge) {
       const { id } = challengeMetaSelector(state);
       const { username } = userSelector(state);
-      const { solution: { value: solution } } = backendFormValuesSelector(
-        state
-      );
+      const solution = backendFormValuesSelector(state, 'solution');
       const challengeInfo = { id, solution };
       return postChallenge(
         '/external/backend-challenge-completed',

@@ -1,4 +1,5 @@
 import { createAction, handleActions } from 'redux-actions';
+import { formValueSelector } from 'redux-form';
 
 import { createTypes } from '../../../../utils/stateManagment';
 import { createPoly } from '../utils/polyvinyl';
@@ -140,7 +141,7 @@ export const isResetModalOpenSelector = state => state[ns].modal.reset;
 export const isJSEnabledSelector = state => state[ns].isJSEnabled;
 export const successMessageSelector = state => state[ns].successMessage;
 
-export const backendFormValuesSelector = state => state.form[backendNS].values;
+export const backendFormValuesSelector = formValueSelector(backendNS);
 export const projectFormVaulesSelector = state =>
   state[ns].projectFormVaules || {};
 
