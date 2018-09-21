@@ -6,6 +6,7 @@ import {
   combineReducers,
   applyMiddleware
 } from 'redux';
+import createSagaMiddleware from 'redux-saga';
 import { combineEpics, createEpicMiddleware } from 'redux-observable';
 
 import { reducer as app, epics as appEpics } from './app';
@@ -16,7 +17,9 @@ import {
 } from '../templates/Challenges/redux';
 import { reducer as map } from '../components/Map/redux';
 import servicesCreator from './createServices';
-import { _csrf } from './cookieVaules';
+import { _csrf } from './cookieValues';
+
+import rootSaga from './rootSaga';
 
 const serviceOptions = {
   context: _csrf ? { _csrf } : {},
@@ -31,14 +34,19 @@ const rootReducer = combineReducers({
   map
 });
 
+const sagaMiddleware = createSagaMiddleware({
+  context: {
+    services: servicesCreator(serviceOptions)
+  }
+});
+
 const rootEpic = combineEpics(...appEpics, ...challengeEpics);
 
 const epicMiddleware = createEpicMiddleware(rootEpic, {
   dependencies: {
     window: typeof window !== 'undefined' ? window : {},
     location: typeof window !== 'undefined' ? window.location : {},
-    document: typeof window !== 'undefined' ? document : {},
-    services: servicesCreator(serviceOptions)
+    document: typeof window !== 'undefined' ? document : {}
   }
 });
 
@@ -46,8 +54,11 @@ const composeEnhancers = composeWithDevTools({
   // options like actionSanitizer, stateSanitizer
 });
 
-export const createStore = () =>
-  reduxCreateStore(
+export const createStore = () => {
+  const store = reduxCreateStore(
     rootReducer,
-    composeEnhancers(applyMiddleware(epicMiddleware))
+    composeEnhancers(applyMiddleware(epicMiddleware, sagaMiddleware))
   );
+  sagaMiddleware.run(rootSaga);
+  return store;
+};

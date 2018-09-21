@@ -12,7 +12,7 @@ import {
 import { ofType } from 'redux-observable';
 import { navigate } from 'gatsby';
 
-import { _csrf as csrfToken } from '../../../redux/cookieVaules';
+import { _csrf as csrfToken } from '../../../redux/cookieValues';
 
 import {
   backendFormValuesSelector,

@@ -5,6 +5,7 @@ const babelOptions = {
   ],
   plugins: [
     '@babel/plugin-proposal-function-bind',
+    '@babel/plugin-transform-runtime',
     [
       'transform-imports', {
         'react-bootstrap': {
