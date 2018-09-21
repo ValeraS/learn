@@ -1,5 +1,7 @@
 import { createAction, handleActions } from 'redux-actions';
 
+import { reducer as reduxFormReducer } from 'redux-form';
+
 import { createTypes } from '../../../../utils/stateManagment';
 import { createPoly } from '../utils/polyvinyl';
 import challengeModalEpic from './challenge-modal-epic';
@@ -266,3 +268,28 @@ export const reducer = handleActions(
   },
   initialState
 );
+
+export const formReducer = reduxFormReducer.plugin({
+  'frond-end-form': (state, action) => {
+      if (action.type === types.updateProjectFormValues &&
+        (!action.payload || Object.keys(action.payload).length === 0)) {
+        console.log(state);
+        return {
+          ...state,
+          solution: {}
+        };
+      }
+      return state;
+  },
+  'back-end-form': (state, action) => {
+    if (action.type === types.updateProjectFormValues &&
+      (!action.payload || Object.keys(action.payload).length === 0)) {
+        return {
+          ...state,
+          solution: {},
+          githubLink: {}
+        };
+    }
+    return state;
+  }
+});

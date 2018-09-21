@@ -75,7 +75,8 @@ export class Project extends PureComponent {
       data: { challengeNode: { title: currentTitle, challengeType } },
       pageContext: { challengeMeta },
       updateChallengeMeta,
-      updateSuccessMessage
+      updateSuccessMessage,
+      updateProjectFormValues
     } = this.props;
     updateSuccessMessage(randomCompliment());
     if (prevTitle !== currentTitle) {
@@ -85,6 +86,7 @@ export class Project extends PureComponent {
         title: currentTitle,
         challengeType
       });
+      updateProjectFormValues({});
     }
   }
 
