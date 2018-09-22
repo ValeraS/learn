@@ -9,7 +9,7 @@ import {
 import createSagaMiddleware from 'redux-saga';
 import { combineEpics, createEpicMiddleware } from 'redux-observable';
 
-import { reducer as app, epics as appEpics } from './app';
+import { reducer as app } from './app';
 import {
   reducer as challenge,
   epics as challengeEpics,
@@ -36,16 +36,16 @@ const rootReducer = combineReducers({
 
 const sagaMiddleware = createSagaMiddleware({
   context: {
+    location: typeof window !== 'undefined' ? window.location : {},
     services: servicesCreator(serviceOptions)
   }
 });
 
-const rootEpic = combineEpics(...appEpics, ...challengeEpics);
+const rootEpic = combineEpics(...challengeEpics);
 
 const epicMiddleware = createEpicMiddleware(rootEpic, {
   dependencies: {
     window: typeof window !== 'undefined' ? window : {},
-    location: typeof window !== 'undefined' ? window.location : {},
     document: typeof window !== 'undefined' ? document : {}
   }
 });

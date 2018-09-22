@@ -3,13 +3,11 @@ import { uniqBy } from 'lodash';
 
 import { createTypes } from '../../../utils/stateManagment';
 import { types as challenge } from '../../templates/Challenges/redux';
-import hardGoToEpic from './hard-go-to-epic';
 
+import { createHardGoToSaga } from './hard-go-to-saga';
 import { createFetchUserSaga } from './fetch-user-saga';
 
 const ns = 'app';
-
-export const epics = [hardGoToEpic];
 
 export const types = createTypes(
   [
@@ -26,7 +24,8 @@ export const types = createTypes(
 );
 
 export const sagas = [
-  ...createFetchUserSaga(types)
+  ...createFetchUserSaga(types),
+  ...createHardGoToSaga(types)
 ];
 
 const initialState = {
