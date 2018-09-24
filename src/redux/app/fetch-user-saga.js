@@ -5,7 +5,7 @@ import { call, put, takeEvery, getContext } from 'redux-saga/effects';
 import { fetchUserComplete, fetchUserError, hardGoTo, noUserFound } from './';
 import { jwt } from '../cookieValues';
 
-function* fetchSessionUser() {
+export function* fetchSessionUser() {
   if (!jwt) {
     yield put(noUserFound());
   } else {
