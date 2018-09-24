@@ -1,7 +1,7 @@
 /* global HOME_PATH */
 import { takeEvery, getContext } from 'redux-saga/effects';
 
-function* hardGoToSaga({ payload = HOME_PATH }) {
+export function* hardGoToSaga({ payload = HOME_PATH }) {
   const location = yield getContext('location');
   location.href = payload;
 }
